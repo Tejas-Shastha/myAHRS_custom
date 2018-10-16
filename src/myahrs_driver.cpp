@@ -78,13 +78,14 @@ private:
   }
 
 public:
-  MyAhrsDriverForROS(std::string port="", int baud_rate=115200)
-  : iMyAhrsPlus(port, baud_rate),
+  MyAhrsDriverForROS(std::string port="", int baud_rate=115200, int dev_id=1)
+  : iMyAhrsPlus(port, baud_rate, dev_id),
     nh_priv_("~")
   {
     // dependent on user device
     nh_priv_.setParam("port", port);
     nh_priv_.setParam("baud_rate", baud_rate);
+    nh_priv_.setParam("dev_id", dev_id);
     // default frame id
     nh_priv_.param("frame_id", frame_id_, std::string("imu_link"));
     // for testing the tf
@@ -95,10 +96,15 @@ public:
     nh_priv_.param("magnetic_field_stddev", magnetic_field_stddev_, 0.00000327486);
     nh_priv_.param("orientation_stddev", orientation_stddev_, 0.002143);
     // publisher for streaming
-    imu_data_raw_pub_   = nh_.advertise<sensor_msgs::Imu>("imu/data_raw", 1);
-    imu_data_pub_       = nh_.advertise<sensor_msgs::Imu>("imu/data", 1);
-    imu_mag_pub_        = nh_.advertise<sensor_msgs::MagneticField>("imu/mag", 1);
-    imu_temperature_pub_= nh_.advertise<std_msgs::Float64>("imu/temperature", 1);
+    std::stringstream dev_name_stream;
+    dev_name_stream << "imu" << dev_id << "/";
+    std::string dev_name = dev_name_stream.str();
+
+
+    imu_data_raw_pub_   = nh_.advertise<sensor_msgs::Imu>(dev_name+"data_raw", 1);
+    imu_data_pub_       = nh_.advertise<sensor_msgs::Imu>(dev_name+"data", 1);
+    imu_mag_pub_        = nh_.advertise<sensor_msgs::MagneticField>(dev_name+"mag", 1);
+    imu_temperature_pub_= nh_.advertise<std_msgs::Float64>(dev_name+"temperature", 1);
   }
 
   ~MyAhrsDriverForROS()
@@ -250,11 +256,13 @@ int main(int argc, char* argv[])
 
   std::string port = std::string("/dev/ttyACM0");
   int baud_rate    = 115200;
+  int dev_id = 1;
 
   ros::param::get("~port", port);
   ros::param::get("~baud_rate", baud_rate);
+  ros::param::get("~dev_id", dev_id);
 
-  MyAhrsDriverForROS sensor(port, baud_rate);
+  MyAhrsDriverForROS sensor(port, baud_rate, dev_id);
 
   if(sensor.initialize() == false)
   {
@@ -264,6 +272,7 @@ int main(int argc, char* argv[])
   else
   {
     ROS_INFO("Initialization OK!\n");
+    ROS_INFO_STREAM("Using port : " << port << " dev_id : " << dev_id << " baud : " << baud_rate);
   }
 
   ros::spin();

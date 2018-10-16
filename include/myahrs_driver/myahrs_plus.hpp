@@ -1837,7 +1837,7 @@ namespace WithRobot {
         iMyAhrsPlus(iMyAhrsPlus& rhs):protocol(this) {}
 
     public:
-        iMyAhrsPlus(std::string port_name="", unsigned int baudrate=115200)
+        iMyAhrsPlus(std::string port_name="", unsigned int baudrate=115200, int dev_id=1)
         : serial(port_name.c_str(), baudrate)
         , debug(DEBUG_MYAHRS_PLUS)
         , protocol(this)
